@@ -1,13 +1,16 @@
-"""Preprocess DLH713 OpenSky trajectory exports for PCA/HDBSCAN teammates.
+"""Preprocess OpenSky-style aircraft trajectory exports for PCA/HDBSCAN teammates.
 
-The provided OpenSky exports are Excel workbooks that contain CSV-like text in a
-single column. Long trajectory rows may be split across several Excel rows, so
-this script reconstructs each flight record, expands its `track` list into
-point-level trajectory data, cleans obvious data-quality issues, and exports
-clean/scaled CSV files.
+The current project uses DLH713 trajectory exports, but the script is written so
+that the input filename pattern can be changed without editing the code.
+
+The provided exports are Excel workbooks that contain CSV-like text in a single
+column. Long trajectory rows may be split across several Excel rows, so this
+script reconstructs each flight record, expands its `track` list into point-level
+trajectory data, cleans obvious data-quality issues, and exports clean/scaled CSV
+files.
 
 Run from the project root:
-    python src/preprocess.py --raw-dir . --processed-dir data/processed
+    python src/preprocess.py --raw-dir . --file-pattern "DLH713_*.xlsx" --processed-dir data/processed
 """
 
 from __future__ import annotations
@@ -16,7 +19,7 @@ import argparse
 import csv
 import json
 import re
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Iterable
 
@@ -25,6 +28,7 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
 
+# OpenSky ICAO24 aircraft identifiers are six hexadecimal characters.
 RECORD_START_RE = re.compile(r"^[0-9a-fA-F]{6},")
 YEAR_RE = re.compile(r"(20\d{2})")
 POINT_RE = re.compile(
@@ -51,6 +55,9 @@ SCALING_FEATURES = [
 
 @dataclass
 class PreprocessingReport:
+    """Small reproducibility summary saved after preprocessing."""
+
+    file_pattern: str
     raw_files: list[str]
     reconstructed_flights: int
     parsed_points_before_cleaning: int
@@ -61,16 +68,35 @@ class PreprocessingReport:
     output_files: dict[str, str]
 
 
-def find_input_files(raw_dir: Path) -> list[Path]:
-    """Find DLH713 Excel exports in the selected directory tree."""
-    patterns = ["DLH713_*.xlsx", "**/DLH713_*.xlsx"]
+def find_input_files(raw_dir: Path, file_pattern: str) -> list[Path]:
+    """Find raw Excel exports using a configurable filename pattern.
+
+    Example patterns:
+        DLH713_*.xlsx
+        *.xlsx
+        flight_*.xlsx
+
+    This makes the preprocessing pipeline reusable if the team changes the
+    route, callsign, or dataset later.
+    """
+    patterns = [file_pattern]
+    if "**/" not in file_pattern:
+        patterns.append(f"**/{file_pattern}")
+
     found: list[Path] = []
     for pattern in patterns:
         found.extend(raw_dir.glob(pattern))
-    unique = sorted({path.resolve() for path in found})
+
+    unique = sorted(
+        {
+            path.resolve()
+            for path in found
+            if path.is_file() and not path.name.startswith("~$")
+        }
+    )
     if not unique:
         raise FileNotFoundError(
-            f"No DLH713 Excel files found in {raw_dir}. Expected files like DLH713_2024.csv.xlsx."
+            f"No raw Excel files found in {raw_dir} using pattern {file_pattern!r}."
         )
     return unique
 
@@ -121,6 +147,8 @@ def parse_flight_records(records: list[str], source_file: Path) -> pd.DataFrame:
         if len(parsed) < len(RAW_COLUMNS):
             continue
 
+        # The first four values are flight-level fields. The remaining text is the
+        # nested track list, which may contain many commas inside point objects.
         parsed = parsed[:4] + [",".join(parsed[4:])]
         row = dict(zip(RAW_COLUMNS, parsed))
         row["source_year"] = source_year
@@ -301,10 +329,10 @@ def create_flight_summary(cleaned: pd.DataFrame) -> pd.DataFrame:
     return summary
 
 
-def run_preprocessing(raw_dir: Path, processed_dir: Path) -> PreprocessingReport:
+def run_preprocessing(raw_dir: Path, processed_dir: Path, file_pattern: str) -> PreprocessingReport:
     """Run the complete preprocessing pipeline and save output CSV files."""
     processed_dir.mkdir(parents=True, exist_ok=True)
-    input_files = find_input_files(raw_dir)
+    input_files = find_input_files(raw_dir, file_pattern)
 
     flights = load_flight_table(input_files)
     points = expand_tracks(flights)
@@ -322,6 +350,7 @@ def run_preprocessing(raw_dir: Path, processed_dir: Path) -> PreprocessingReport
     summary.to_csv(summary_path, index=False)
 
     report = PreprocessingReport(
+        file_pattern=file_pattern,
         raw_files=[str(path) for path in input_files],
         reconstructed_flights=int(flights["flight_id"].nunique()),
         parsed_points_before_cleaning=stats["parsed_points_before_cleaning"],
@@ -342,12 +371,18 @@ def run_preprocessing(raw_dir: Path, processed_dir: Path) -> PreprocessingReport
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Preprocess DLH713 OpenSky trajectory files.")
+    parser = argparse.ArgumentParser(description="Preprocess OpenSky-style aircraft trajectory files.")
     parser.add_argument(
         "--raw-dir",
         type=Path,
         default=Path("."),
-        help="Directory containing DLH713_*.xlsx raw files. Default: current project root.",
+        help="Directory containing raw Excel trajectory files. Default: current project root.",
+    )
+    parser.add_argument(
+        "--file-pattern",
+        type=str,
+        default="DLH713_*.xlsx",
+        help="Filename pattern for raw files. Default: DLH713_*.xlsx. Example: '*.xlsx' or 'flight_*.xlsx'.",
     )
     parser.add_argument(
         "--processed-dir",
@@ -360,7 +395,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    report = run_preprocessing(args.raw_dir, args.processed_dir)
+    report = run_preprocessing(args.raw_dir, args.processed_dir, args.file_pattern)
     print(json.dumps(asdict(report), indent=2))
 
 
