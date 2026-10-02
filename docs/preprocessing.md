@@ -18,11 +18,27 @@ DLH713_2026.csv.xlsx
 
 Although the files are `.xlsx`, the content behaves like CSV text stored in a single Excel column. Because long trajectory records may exceed Excel cell limits, one flight record can be split across multiple rows. The preprocessing script reconstructs these split rows before parsing.
 
+The exact original data source should be confirmed by the team. The preprocessing pipeline only assumes the observed file structure and does not depend on airport names.
+
+## Flexible input pattern
+
+The script is not fixed to one route forever. The current default pattern is:
+
+```bash
+--file-pattern "DLH713_*.xlsx"
+```
+
+If the team changes dataset or moves the files, the same script can be reused:
+
+```bash
+python src/preprocess.py --raw-dir data/raw --file-pattern "*.xlsx" --processed-dir data/processed
+```
+
 ## Pipeline
 
 ### 1. Load raw files
 
-The script searches for `DLH713_*.xlsx` files in the selected raw directory.
+The script searches for Excel files using the selected `--file-pattern`.
 
 ### 2. Reconstruct flight records
 
@@ -126,7 +142,7 @@ preprocessing_report.json
 
 ## Verified result on current data
 
-Using the 2024–2026 DLH713 files, the preprocessing pipeline produced:
+Using the 2024-2026 DLH713 files, the preprocessing pipeline produced:
 
 ```text
 reconstructed_flights: 291
@@ -136,6 +152,13 @@ duplicated_points_removed: 1
 clean_points: 86362
 clean_flights: 291
 ```
+
+## Limitations and assumptions
+
+- The exact original provider/source of the raw files should be confirmed by the team.
+- The route label is project context only; the raw files do not contain explicit departure/arrival airport columns.
+- The script assumes an OpenSky-style nested `track` field with point objects containing time, latitude, longitude, altitude, heading, and onground values.
+- This contribution does not perform PCA, HDBSCAN, cluster analysis, or final visualization.
 
 ## Next team steps
 
