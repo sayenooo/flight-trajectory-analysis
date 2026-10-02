@@ -1,18 +1,3 @@
-"""Preprocess OpenSky-style aircraft trajectory exports for PCA/HDBSCAN teammates.
-
-The current project uses DLH713 trajectory exports, but the script is written so
-that the input filename pattern can be changed without editing the code.
-
-The provided exports are Excel workbooks that contain CSV-like text in a single
-column. Long trajectory rows may be split across several Excel rows, so this
-script reconstructs each flight record, expands its `track` list into point-level
-trajectory data, cleans obvious data-quality issues, and exports clean/scaled CSV
-files.
-
-Run from the project root:
-    python src/preprocess.py --raw-dir . --file-pattern "DLH713_*.xlsx" --processed-dir data/processed
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -28,7 +13,6 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
 
-# OpenSky ICAO24 aircraft identifiers are six hexadecimal characters.
 RECORD_START_RE = re.compile(r"^[0-9a-fA-F]{6},")
 YEAR_RE = re.compile(r"(20\d{2})")
 POINT_RE = re.compile(
@@ -237,9 +221,7 @@ def clean_points(points: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, int]]:
         cleaned[column] = pd.to_numeric(cleaned[column], errors="coerce")
     cleaned = cleaned.dropna(subset=REQUIRED_POINT_COLUMNS)
 
-    # Keep only physically plausible coordinates/headings and timestamps that belong
-    # to the corresponding flight interval. A small tolerance is allowed because
-    # OpenSky firstseen/lastseen and track point timestamps can differ slightly.
+
     time_tolerance_sec = 3600
     valid_mask = (
         cleaned["latitude"].between(-90, 90)
@@ -283,7 +265,6 @@ def clean_points(points: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, int]]:
     cleaned["lastseen_utc"] = pd.to_datetime(cleaned["lastseen_unix"], unit="s", utc=True)
     cleaned["altitude_below_zero"] = cleaned["altitude"] < 0
 
-    # Store integer timestamps after datetime conversion.
     for column in ["point_time_unix", "firstseen_unix", "lastseen_unix"]:
         cleaned[column] = cleaned[column].astype("int64")
 
