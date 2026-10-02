@@ -33,14 +33,20 @@ data/
 └── processed/    # generated preprocessing outputs
 ```
 
-The current preprocessing script can read raw DLH713 Excel exports either from the project root or from a selected raw-data directory.
+The current raw files are stored in the project root, but the script also works if raw files are moved into `data/raw/`.
 
 ## Run preprocessing
 
-From the project root:
+From the project root with the current files:
 
 ```bash
-python src/preprocess.py --raw-dir . --processed-dir data/processed
+python src/preprocess.py --raw-dir . --file-pattern "DLH713_*.xlsx" --processed-dir data/processed
+```
+
+If the team moves the files into `data/raw/` or changes the dataset, use a different pattern:
+
+```bash
+python src/preprocess.py --raw-dir data/raw --file-pattern "*.xlsx" --processed-dir data/processed
 ```
 
 Generated files:
@@ -53,3 +59,10 @@ data/processed/preprocessing_report.json
 ```
 
 The generated CSV files are designed for the next project stage: PCA, HDBSCAN clustering, anomaly detection, and visualization.
+
+## Notes for teammates
+
+- `flight_points_clean.csv` keeps original latitude, longitude, altitude, heading, and time values.
+- `flight_points_scaled.csv` adds standardized numeric columns for PCA/HDBSCAN.
+- `flights_summary.csv` provides one row per reconstructed flight for quick quality checks.
+- `preprocessing_report.json` records the input pattern and the number of parsed/removed/saved points.
