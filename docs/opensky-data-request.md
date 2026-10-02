@@ -6,7 +6,7 @@ Aircraft trajectory analysis and clustering using real-world trajectory exports.
 
 ## Current dataset
 
-The project no longer uses the earlier ZRH-GVA route idea. The current working files are DLH713 trajectory exports for 2024, 2025, and 2026:
+The current working files are DLH713 trajectory exports for 2024, 2025, and 2026:
 
 ```text
 DLH713_2024.csv.xlsx
@@ -14,7 +14,7 @@ DLH713_2025.csv.xlsx
 DLH713_2026.csv.xlsx
 ```
 
-The exact original provider/source of these files should be confirmed by the team. The files have an OpenSky-style structure, but this repository currently documents and preprocesses the files as provided.
+The exact original provider/source of these files should be confirmed by the project team. The files have an OpenSky-style structure, but this repository documents and preprocesses the files as provided.
 
 ## Current route context
 
@@ -35,8 +35,8 @@ Non-commercial university coursework / academic research.
 - trajectory reconstruction
 - preprocessing and visualization
 - comparison of repeated flights
-- PCA or other dimensionality-reduction methods
-- HDBSCAN clustering
+- dimensionality reduction
+- trajectory clustering
 - detection and interpretation of unusual trajectories
 
 ## Available fields in the current raw files
@@ -53,13 +53,13 @@ Point-level fields inside `track`:
 time, latitude, longitude, altitude, heading, onground
 ```
 
-## Current contribution
+## Processing scope
 
-The current contribution is limited to preprocessing:
+The preprocessing pipeline covers:
 
-- reconstruct split records from the Excel exports
-- parse flight-level data
-- expand nested trajectory points
-- clean invalid values and duplicates
-- sort each trajectory chronologically
-- create processed CSV outputs for teammates who will continue with PCA/HDBSCAN
+- reconstructing split records from the Excel exports;
+- parsing flight-level data;
+- expanding nested trajectory points;
+- cleaning invalid values and duplicates;
+- sorting each trajectory chronologically;
+- creating processed CSV outputs for downstream analysis.
