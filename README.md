@@ -1,10 +1,10 @@
-# Flight Trajectory Analysis with OpenSky
+# Flight Trajectory Analysis
 
-Academic project for analyzing and clustering real-world aircraft trajectories using data from the OpenSky Network.
+Academic project for analyzing and clustering real-world aircraft trajectories.
 
 ## Current dataset
 
-The current working dataset contains **DLH713 trajectory exports for 2024, 2025, and 2026**:
+The current working dataset is no longer the earlier ZRH-GVA idea. The project now uses **DLH713 trajectory exports for 2024, 2025, and 2026**:
 
 ```text
 DLH713_2024.csv.xlsx
@@ -12,7 +12,31 @@ DLH713_2025.csv.xlsx
 DLH713_2026.csv.xlsx
 ```
 
-Each workbook stores CSV-like OpenSky flight records in one Excel column. Long trajectory records may be split across several Excel rows. The preprocessing code therefore reconstructs complete flight records first, then expands every `track` list into point-level trajectory data.
+The exact original provider of the files should be confirmed by the team. The files have an OpenSky-style structure and contain CSV-like flight records stored inside Excel workbooks.
+
+Each raw record contains the following main fields:
+
+```text
+icao24, callsign, firstseen, lastseen, track
+```
+
+The `track` field contains a list of trajectory points with:
+
+```text
+time, latitude, longitude, altitude, heading, onground
+```
+
+Long trajectory records may be split across several Excel rows. Therefore, the preprocessing code first reconstructs complete flight records and then expands every `track` list into point-level trajectory data.
+
+## Current route / airport context
+
+The current dataset is based on the callsign **DLH713**. Based on the callsign and the observed trajectory coordinates, the working route context is:
+
+```text
+Seoul / Incheon area (ICN / RKSI) -> Frankfurt area (FRA / EDDF)
+```
+
+Important note: the raw files do **not** contain explicit departure-airport or arrival-airport columns. The route label above is used only as project context inferred from the flight number and coordinate ranges. The preprocessing pipeline itself does not depend on airport names.
 
 ## Objective
 
@@ -20,7 +44,9 @@ The full team project is to analyze real-world aircraft trajectories and prepare
 
 This repository currently focuses on the **data preprocessing stage**, which prepares clean and standardized trajectory data for teammates who will continue with PCA, HDBSCAN, visualization, and anomaly analysis.
 
-## Preprocessing scope
+## My contribution: preprocessing
+
+This part of the project is limited to preparing the raw DLH713 files for later analysis.
 
 The preprocessing script performs:
 
@@ -145,7 +171,7 @@ A short reproducibility report showing how many flights and points were parsed, 
 
 ## Current preprocessing result
 
-Using the provided 2024–2026 DLH713 files, the pipeline produced:
+Using the provided 2024-2026 DLH713 files, the pipeline produced:
 
 ```text
 reconstructed_flights: 291
@@ -159,7 +185,7 @@ clean_flights: 291
 ## Planned full project pipeline
 
 ```text
-Raw OpenSky trajectory exports
+Raw DLH713 trajectory exports
         |
         v
 Data preprocessing  <-- current contribution
