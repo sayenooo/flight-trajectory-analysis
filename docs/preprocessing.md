@@ -1,10 +1,6 @@
 # Data Preprocessing Methodology
 
-This document explains the preprocessing contribution for the flight trajectory clustering project.
-
-## Role in the team project
-
-The full academic project analyzes real-world aircraft trajectories and applies clustering methods such as HDBSCAN. This part focuses only on **data preprocessing**. PCA, HDBSCAN, cluster interpretation, and anomaly analysis are separate downstream tasks.
+This document describes the preprocessing pipeline for the aircraft trajectory analysis project.
 
 ## Raw data format
 
@@ -16,19 +12,19 @@ DLH713_2025.csv.xlsx
 DLH713_2026.csv.xlsx
 ```
 
-Although the files are `.xlsx`, the content behaves like CSV text stored in a single Excel column. Because long trajectory records may exceed Excel cell limits, one flight record can be split across multiple rows. The preprocessing script reconstructs these split rows before parsing.
+Although the files are `.xlsx`, the content behaves like CSV text stored in a single Excel column. Long trajectory records may be split across multiple rows, so the preprocessing pipeline reconstructs split records before parsing.
 
-The exact original data source should be confirmed by the team. The preprocessing pipeline only assumes the observed file structure and does not depend on airport names.
+The exact original data source should be confirmed by the project team. The preprocessing pipeline only assumes the observed file structure and does not depend on airport names.
 
 ## Flexible input pattern
 
-The script is not fixed to one route forever. The current default pattern is:
+The current default pattern is:
 
 ```bash
 --file-pattern "DLH713_*.xlsx"
 ```
 
-If the team changes dataset or moves the files, the same script can be reused:
+If the dataset or file locations change, the same script can be reused with another pattern:
 
 ```bash
 python src/preprocess.py --raw-dir data/raw --file-pattern "*.xlsx" --processed-dir data/processed
@@ -59,9 +55,9 @@ source_file
 flight_id
 ```
 
-### 4. Expand the trajectory track
+### 4. Expand trajectory tracks
 
-The `track` field contains a list of points with:
+The `track` field contains a list of trajectory points with:
 
 ```text
 time
@@ -86,13 +82,11 @@ The script removes points with:
 - point timestamps outside the corresponding flight interval, with a one-hour tolerance;
 - duplicate point records.
 
-The script does **not** aggressively remove negative altitude values, because barometric altitude and airport/reference effects can produce small negative values. Instead, it adds a flag:
+Negative altitude values are not automatically removed. Barometric altitude and airport/reference effects can produce small negative values, so the pipeline preserves them and adds this flag:
 
 ```text
 altitude_below_zero
 ```
-
-This preserves data while making potential altitude artifacts visible for later analysis.
 
 ### 6. Create derived preprocessing features
 
@@ -112,7 +106,7 @@ lastseen_utc
 altitude_below_zero
 ```
 
-These features help the next teammates compare trajectories consistently.
+These features support consistent trajectory comparison and downstream analysis.
 
 ### 7. Standardize numeric features
 
@@ -153,19 +147,15 @@ clean_points: 86362
 clean_flights: 291
 ```
 
-## Limitations and assumptions
+## Assumptions and limitations
 
-- The exact original provider/source of the raw files should be confirmed by the team.
+- The exact original provider/source of the raw files should be confirmed by the project team.
 - The route label is project context only; the raw files do not contain explicit departure/arrival airport columns.
 - The script assumes an OpenSky-style nested `track` field with point objects containing time, latitude, longitude, altitude, heading, and onground values.
-- This contribution does not perform PCA, HDBSCAN, cluster analysis, or final visualization.
 
-## Next team steps
+## Output usage
 
-The next teammates can use `flight_points_scaled.csv` for:
-
-- PCA;
-- trajectory feature extraction;
-- HDBSCAN clustering;
-- anomaly detection;
-- trajectory visualization.
+- `flight_points_clean.csv`: map visualization, trajectory inspection, and feature engineering.
+- `flight_points_scaled.csv`: feature-based modeling, dimensionality reduction, and clustering.
+- `flights_summary.csv`: flight-level quality checks.
+- `preprocessing_report.json`: preprocessing statistics and reproducibility information.
