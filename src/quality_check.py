@@ -27,6 +27,8 @@ class QualityCheckReport:
     flights_with_spikes: int
     incomplete_start_flights: int
     incomplete_end_flights: int
+    qc_clean_points: int
+    qc_clean_flights: int
     output_files: dict[str, str]
 
 
@@ -229,11 +231,18 @@ def run_quality_check(
     point_flags_path = output_dir / "point_quality_flags.csv"
     spike_candidates_path = output_dir / "spike_candidates.csv"
     flight_summary_path = output_dir / "flight_quality_summary.csv"
+    qc_clean_path = output_dir / "flight_points_qc_clean.csv"
     report_path = output_dir / "quality_check_report.json"
+
+    # Keep all diagnostic columns in the flag file, but write the QC-clean dataset
+    # using only the original preprocessing columns. The original input file is
+    # never modified.
+    qc_clean = flagged.loc[~flagged["isolated_spike"], points.columns].copy()
 
     flagged.to_csv(point_flags_path, index=False)
     flagged.loc[flagged["isolated_spike"]].to_csv(spike_candidates_path, index=False)
     summary.to_csv(flight_summary_path, index=False)
+    qc_clean.to_csv(qc_clean_path, index=False)
 
     report = QualityCheckReport(
         input_file=str(input_file),
@@ -243,10 +252,13 @@ def run_quality_check(
         flights_with_spikes=int(summary["has_coordinate_spike"].sum()),
         incomplete_start_flights=int(summary["incomplete_start"].sum()),
         incomplete_end_flights=int(summary["incomplete_end"].sum()),
+        qc_clean_points=int(len(qc_clean)),
+        qc_clean_flights=int(qc_clean["flight_id"].nunique()),
         output_files={
             "point_quality_flags": str(point_flags_path),
             "spike_candidates": str(spike_candidates_path),
             "flight_quality_summary": str(flight_summary_path),
+            "qc_clean_points": str(qc_clean_path),
             "report": str(report_path),
         },
     )
@@ -260,7 +272,10 @@ def run_quality_check(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Run second-stage trajectory quality checks without deleting data."
+        description=(
+            "Run second-stage trajectory quality checks and write a separate "
+            "QC-clean dataset with isolated spike points removed."
+        )
     )
     parser.add_argument(
         "--input-file",
