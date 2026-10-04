@@ -1,0 +1,19 @@
+{
+  "input_file": "data/quality/flight_points_final.csv",
+  "total_points": 85596,
+  "total_flights": 288,
+  "matrix_shape": [
+    288,
+    288
+  ],
+  "earth_radius_km": 6371.0088,
+  "distance_metric": "symmetric Hausdorff distance using sklearn.metrics.pairwise.haversine_distances",
+  "diagonal_max_abs_km": 0.0,
+  "symmetry_max_abs_diff_km": 0.0,
+  "output_files": {
+    "matrix_csv": "data/hausdorff/hausdorff_distance_matrix_km.csv",
+    "matrix_npy": "data/hausdorff/hausdorff_distance_matrix_km.npy",
+    "flight_ids": "data/hausdorff/hausdorff_flight_ids.csv",
+    "report": "data/hausdorff/hausdorff_matrix_report.json"
+  }
+}
