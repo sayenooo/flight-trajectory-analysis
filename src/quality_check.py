@@ -29,6 +29,8 @@ class QualityCheckReport:
     incomplete_end_flights: int
     qc_clean_points: int
     qc_clean_flights: int
+    final_points: int
+    final_flights: int
     output_files: dict[str, str]
 
 
@@ -233,6 +235,7 @@ def run_quality_check(
     flight_summary_path = output_dir / "flight_quality_summary.csv"
     incomplete_start_path = output_dir / "incomplete_start_candidates.csv"
     qc_clean_path = output_dir / "flight_points_qc_clean.csv"
+    final_path = output_dir / "flight_points_final.csv"
     report_path = output_dir / "quality_check_report.json"
 
     # Keep all diagnostic columns in the flag file, but write the QC-clean dataset
@@ -240,11 +243,24 @@ def run_quality_check(
     # never modified.
     qc_clean = flagged.loc[~flagged["isolated_spike"], points.columns].copy()
 
+    # Baseline analysis dataset:
+    # 1) remove only confirmed isolated spike points;
+    # 2) exclude flights whose first recorded point is more than the configured
+    #    airport radius from ICN. These are incomplete observations, not abnormal
+    #    operational trajectories.
+    incomplete_start_ids = set(
+        summary.loc[summary["incomplete_start"], "flight_id"].astype(str)
+    )
+    final_points = qc_clean.loc[
+        ~qc_clean["flight_id"].astype(str).isin(incomplete_start_ids)
+    ].copy()
+
     flagged.to_csv(point_flags_path, index=False)
     flagged.loc[flagged["isolated_spike"]].to_csv(spike_candidates_path, index=False)
     summary.to_csv(flight_summary_path, index=False)
     summary.loc[summary["incomplete_start"]].to_csv(incomplete_start_path, index=False)
     qc_clean.to_csv(qc_clean_path, index=False)
+    final_points.to_csv(final_path, index=False)
 
     report = QualityCheckReport(
         input_file=str(input_file),
@@ -256,12 +272,15 @@ def run_quality_check(
         incomplete_end_flights=int(summary["incomplete_end"].sum()),
         qc_clean_points=int(len(qc_clean)),
         qc_clean_flights=int(qc_clean["flight_id"].nunique()),
+        final_points=int(len(final_points)),
+        final_flights=int(final_points["flight_id"].nunique()),
         output_files={
             "point_quality_flags": str(point_flags_path),
             "spike_candidates": str(spike_candidates_path),
             "flight_quality_summary": str(flight_summary_path),
             "incomplete_start_candidates": str(incomplete_start_path),
             "qc_clean_points": str(qc_clean_path),
+            "final_points": str(final_path),
             "report": str(report_path),
         },
     )
@@ -276,8 +295,9 @@ def run_quality_check(
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Run second-stage trajectory quality checks and write a separate "
-            "QC-clean dataset with isolated spike points removed."
+            "Run second-stage trajectory quality checks, write a QC-clean dataset "
+            "with isolated spike points removed, and write a final baseline dataset "
+            "excluding incomplete-start flights."
         )
     )
     parser.add_argument(
