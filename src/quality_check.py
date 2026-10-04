@@ -231,6 +231,7 @@ def run_quality_check(
     point_flags_path = output_dir / "point_quality_flags.csv"
     spike_candidates_path = output_dir / "spike_candidates.csv"
     flight_summary_path = output_dir / "flight_quality_summary.csv"
+    incomplete_start_path = output_dir / "incomplete_start_candidates.csv"
     qc_clean_path = output_dir / "flight_points_qc_clean.csv"
     report_path = output_dir / "quality_check_report.json"
 
@@ -242,6 +243,7 @@ def run_quality_check(
     flagged.to_csv(point_flags_path, index=False)
     flagged.loc[flagged["isolated_spike"]].to_csv(spike_candidates_path, index=False)
     summary.to_csv(flight_summary_path, index=False)
+    summary.loc[summary["incomplete_start"]].to_csv(incomplete_start_path, index=False)
     qc_clean.to_csv(qc_clean_path, index=False)
 
     report = QualityCheckReport(
@@ -258,6 +260,7 @@ def run_quality_check(
             "point_quality_flags": str(point_flags_path),
             "spike_candidates": str(spike_candidates_path),
             "flight_quality_summary": str(flight_summary_path),
+            "incomplete_start_candidates": str(incomplete_start_path),
             "qc_clean_points": str(qc_clean_path),
             "report": str(report_path),
         },
