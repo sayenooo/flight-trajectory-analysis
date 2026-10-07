@@ -1,0 +1,45 @@
+{
+  "route": "EGLL -> EDDF",
+  "callsign": "DLH5H",
+  "aircraft_type": "A20N",
+  "source_file": "DLH5H_A20N_2025_ALL_POSITION_POINTS.csv",
+  "source_sha256": "3848f3829e19848eb025df79b1ca7642cb2298ed4bfb75526de70dd3d4fbe858",
+  "source_repository_commit": "3ed740bcaaad81d22a5de6626eac7fa2d5a54b1f",
+  "raw_points": 1242998,
+  "clean_points": 1242774,
+  "removed_points": 224,
+  "removal_reasons": {
+    "short_position_spike": 122,
+    "stale_or_invalid_position_time": 102
+  },
+  "input_flights": 348,
+  "accepted_flights": 309,
+  "review_flights": 39,
+  "review_reasons": {
+    "unresolved_position_jump": 35,
+    "gap_over_limit;unresolved_position_jump": 3,
+    "gap_over_limit": 1
+  },
+  "accepted_points": 1121503,
+  "accepted_worst_gap_sec": 38.081000089645386,
+  "missing_callsign_rows": 852,
+  "unexpected_callsign_rows": 28,
+  "parameters": {
+    "max_age_sec": 15,
+    "max_gap_sec": 60,
+    "airport_radius_km": 15,
+    "spike_speed_envelope_mps": 450,
+    "spike_tolerance_km": 2,
+    "max_spike_burst_points": 5,
+    "max_spike_bridge_sec": 60,
+    "min_points": 100
+  },
+  "notes": [
+    "Thresholds are project choices, not aviation standards; assess sensitivity later.",
+    "Review flights remain in the cleaned file, but are excluded from the baseline matrix.",
+    "No smoothing, interpolation, synthetic points, altitude filtering, or route-corridor clipping.",
+    "Horizontal coordinates only; altitude and speed are not clustering features.",
+    "Callsigns are diagnostic; flight ID and aircraft address define membership.",
+    "These are observed trajectory intervals, not independently verified takeoff/landing times."
+  ]
+}
