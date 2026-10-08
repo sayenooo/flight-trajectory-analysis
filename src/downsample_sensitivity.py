@@ -48,23 +48,49 @@ def parse_args() -> argparse.Namespace:
 
 
 def choose_time_column(df: pd.DataFrame) -> str:
-    # The coordinates correspond most directly to the last position update.
-    # Fall back to state-vector time only if lastposupdate is unavailable.
-    for candidate in ("lastposupdate", "time", "state_time_unix"):
+    # Prefer the timestamp that belongs directly to the stored trajectory point.
+    # Different preprocessing stages in this repository use different names.
+    for candidate in (
+        "lastposupdate",
+        "point_time_unix",
+        "time",
+        "state_time_unix",
+    ):
         if candidate in df.columns:
             return candidate
     raise KeyError(
         "No usable trajectory timestamp found. Expected one of: "
-        "lastposupdate, time, state_time_unix."
+        "lastposupdate, point_time_unix, time, state_time_unix."
     )
 
 
-def prepare_points(points: pd.DataFrame, accepted_ids: set[str]) -> tuple[pd.DataFrame, str]:
-    required = {"flight_id", "lat", "lon"}
-    missing = required.difference(points.columns)
-    if missing:
-        raise KeyError(f"Missing required columns: {sorted(missing)}")
+def normalize_coordinate_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """Normalize repository coordinate naming to lat/lon."""
+    out = df.copy()
 
+    if "lat" not in out.columns and "latitude" in out.columns:
+        out = out.rename(columns={"latitude": "lat"})
+    if "lon" not in out.columns and "longitude" in out.columns:
+        out = out.rename(columns={"longitude": "lon"})
+
+    missing = {"lat", "lon"}.difference(out.columns)
+    if missing:
+        raise KeyError(
+            "Missing coordinate columns after normalization. "
+            f"Expected lat/lon or latitude/longitude; missing: {sorted(missing)}. "
+            f"Available columns: {list(out.columns)}"
+        )
+
+    return out
+
+
+def prepare_points(points: pd.DataFrame, accepted_ids: set[str]) -> tuple[pd.DataFrame, str]:
+    if "flight_id" not in points.columns:
+        raise KeyError(
+            f"Missing required column: flight_id. Available columns: {list(points.columns)}"
+        )
+
+    points = normalize_coordinate_columns(points)
     time_col = choose_time_column(points)
 
     df = points.loc[points["flight_id"].astype(str).isin(accepted_ids)].copy()
