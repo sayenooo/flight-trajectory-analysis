@@ -19,9 +19,9 @@
   "noise_percent": 4.53074433656958,
   "parameter_settings": 15,
   "matrix_sha256": "e75a5de8f6b33039efbf79b5ab65a4c8c9e6d38ab424d41595ea7cf283cdbd77",
-  "flight_id_file_sha256": "46008eebe616687a9c1319554b8063a988686d0f4c4ea640aafb103a3af07f7d",
+  "flight_id_file_sha256": "8d827f5712292976a2f7fe41a8caddaa7b6451134666551c5dbdacb201143ee4",
   "representative_method": "Real flight minimizing the sum of within-cluster Hausdorff distances (unweighted medoid).",
-  "output_dir": "data/lhr_fra_hdbscan_mcs10_ms5",
+  "output_dir": "C:\\pp\\aerospace--2027\\flight-trajectory-dataset-upload\\data\\lhr_fra_hdbscan_mcs10_ms5",
   "interpretation": [
     "This is a baseline, not an automatically selected optimal model.",
     "Label -1 means density-based noise, not a confirmed operational anomaly.",
