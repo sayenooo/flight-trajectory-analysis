@@ -1,0 +1,7 @@
+Candidates are noise under all 15 tested parameter settings, not all possible settings.
+Orange dashed line: nearest unweighted cluster medoid under the four-cluster model.
+The red dotted segment identifies the controlling nearest-neighbour pair for Hausdorff distance.
+The paired positions need not share a timestamp. The distance is not an average route deviation.
+Candidate plots use observed horizontal coordinates, with no new interpolation or smoothing.
+Passing data-quality checks does not prove absence of residual errors.
+Geometry alone cannot establish weather, ATC instructions, runway configuration or safety significance.

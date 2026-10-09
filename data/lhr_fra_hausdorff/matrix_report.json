@@ -1,0 +1,35 @@
+{
+  "matrix_shape": [
+    309,
+    309
+  ],
+  "flights": 309,
+  "points": 1121503,
+  "metric": "symmetric point-set Hausdorff using spherical great-circle distance (km)",
+  "method": "exact KD-tree nearest neighbours on unit-sphere XYZ; chord converted to arc",
+  "interpolation": false,
+  "downsampling": false,
+  "earth_radius_km": 6371.0088,
+  "diagonal_max_abs_km": 0.0,
+  "symmetry_max_abs_diff_km": 0.0,
+  "dense_reference_checks": [
+    {
+      "i": 0,
+      "j": 1,
+      "absolute_error_km": 3.623767952376511e-13
+    },
+    {
+      "i": 0,
+      "j": 308,
+      "absolute_error_km": 2.2026824808563106e-13
+    },
+    {
+      "i": 154,
+      "j": 308,
+      "absolute_error_km": 3.552713678800501e-15
+    }
+  ],
+  "elapsed_seconds": 258.631696735,
+  "clean_points_sha256": "7e4925a67577ed4cb5f34aa72be4d786a150ee5850b5ca9f1f021309c5969acc",
+  "limitation": "Compares observed horizontal geometry; ignores time ordering, speed and altitude. Sensitive to residual position errors."
+}

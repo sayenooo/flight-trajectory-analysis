@@ -1,213 +1,91 @@
-# Flight Trajectory Analysis
+# LHR to FRA flight trajectory clustering
 
-Academic project for preprocessing, analyzing, and clustering real-world aircraft trajectory data.
+Application of Aerospace Artificial Intelligence, Sejong University, Fall 2026.
 
-## Dataset
+This project groups real London Heathrow to Frankfurt trajectories using HDBSCAN and investigates unusual horizontal route shapes. The working dataset is Lufthansa callsign **DLH5H**, aircraft type **A20N**, in **2025**.
 
-The current working dataset uses DLH713 trajectory exports for 2024, 2025, and 2026:
+## Results
 
-```text
-DLH713_2024.csv.xlsx
-DLH713_2025.csv.xlsx
-DLH713_2026.csv.xlsx
-```
+| Stage | Result |
+|---|---:|
+| Source observations | 348 flights, 1,242,998 points |
+| Point cleaning | 224 rows removed |
+| Accepted for clustering | 309 flights, 1,121,503 points |
+| Held for data-quality review | 39 flights |
+| Working HDBSCAN setting | `min_cluster_size=10`, `min_samples=5` |
+| Cluster sizes | 14, 180, 68, 33 |
+| Noise | 14 flights (4.53%) |
+| Persistent candidates across the tested grid | 2025-06-01, 2025-07-27, 2025-09-04 |
 
-The exact original provider/source of the files should be confirmed by the project team. The files have an OpenSky-style structure and contain CSV-like flight records stored inside Excel workbooks.
+The working setting preserves a coherent 14-flight northern route group. It is an exploratory choice supported by the parameter comparison and visual inspection, not an automatically proven optimum. The original `(15, 5)` comparison has three clusters and 28 noise flights. All 15 parameter combinations are included.
 
-Each raw record contains the following main fields:
+![Cluster overview](data/lhr_fra_hdbscan_mcs10_ms5/clusters_overview.png)
 
-```text
-icao24, callsign, firstseen, lastseen, track
-```
+## Start here
 
-The `track` field contains point-level trajectory observations:
+- [Presentation](presentation/LHR_FRA_HDBSCAN_Presentation.pptx) and [15-minute speaker notes](presentation/SPEAKER_NOTES.md)
+- [Method and limitations](docs/METHOD.md)
+- [Results and outlier analysis](docs/RESULTS.md)
+- [Data inventory and provenance](data/README.md)
+- [AI disclosure](docs/AI_DISCLOSURE.md) and [team submission checklist](docs/SUBMISSION.md)
 
-```text
-time, latitude, longitude, altitude, heading, onground
-```
+## Install and run
 
-Long trajectory records may be split across several Excel rows. The preprocessing pipeline reconstructs complete flight records before expanding each `track` list into point-level trajectory data.
+Clone a **fresh folder**. The prepared dataset is a regular compressed Git file, so it is available without downloading the 435 MB raw LFS object. Windows CMD:
 
-## Route / airport context
-
-The current dataset is based on the callsign DLH713. Based on the callsign and observed trajectory coordinates, the working route context is:
-
-```text
-Seoul / Incheon area (ICN / RKSI) -> Frankfurt area (FRA / EDDF)
-```
-
-The raw files do not contain explicit departure-airport or arrival-airport columns. Airport labels are used only as project context; the preprocessing pipeline does not depend on airport names.
-
-## Project objective
-
-The project prepares aircraft trajectory data for downstream trajectory analysis, dimensionality reduction, clustering, anomaly detection, and visualization.
-
-The current repository includes a reproducible preprocessing pipeline that converts the raw trajectory exports into clean and standardized datasets.
-
-## Preprocessing workflow
-
-The preprocessing script performs the following steps:
-
-1. Load raw Excel trajectory files using a configurable file pattern.
-2. Reconstruct complete CSV flight records from split Excel fragments.
-3. Parse flight-level columns: `icao24`, `callsign`, `firstseen`, `lastseen`, and `track`.
-4. Expand the nested `track` field into point-level trajectory rows.
-5. Convert numeric and timestamp fields into correct types.
-6. Remove duplicate trajectory points.
-7. Remove invalid records with impossible coordinates, headings, timestamps, or points outside the flight time interval.
-8. Sort each trajectory chronologically.
-9. Create preprocessing features such as:
-   - `sequence_index`
-   - `point_count`
-   - `time_from_start_sec`
-   - `trajectory_duration_sec`
-   - `route_progress`
-   - `altitude_below_zero`
-10. Create standardized numeric columns for downstream feature-based analysis.
-
-## Repository structure
-
-```text
-flight-trajectory-analysis/
-├── data/
-│   ├── README.md
-│   └── processed/              # generated locally after running preprocessing
-├── docs/
-│   ├── opensky-data-request.md
-│   ├── preprocessing.md
-│   └── output-guide.md
-├── notebooks/
-│   ├── README.md
-│   └── 01_dlh713_trajectory_preprocessing.ipynb
-├── src/
-│   └── preprocess.py
-├── DLH713_2024.csv.xlsx
-├── DLH713_2025.csv.xlsx
-├── DLH713_2026.csv.xlsx
-├── .gitignore
-├── requirements.txt
-└── README.md
-```
-
-## Setup
-
-Create and activate a virtual environment:
-
-```bash
+```bat
+set GIT_LFS_SKIP_SMUDGE=1
+git clone https://github.com/sayenooo/flight-trajectory-analysis.git flight-trajectory-analysis-final
+set GIT_LFS_SKIP_SMUDGE=
+cd flight-trajectory-analysis-final
 python -m venv .venv
-```
-
-Windows:
-
-```bash
 .venv\Scripts\activate
+python -m pip install -r requirements.txt
+python run_pipeline.py
 ```
 
-macOS / Linux:
+On macOS/Linux, use `GIT_LFS_SKIP_SMUDGE=1 git clone ...` and activate with `source .venv/bin/activate`. Python 3.11–3.13 is suitable for the pinned dependencies.
 
-```bash
-source .venv/bin/activate
+`run_pipeline.py` checks that the saved distance matrix matches the prepared-file hash and accepted flight order. It reuses a matching matrix or rebuilds it when required, then runs both HDBSCAN settings and the candidate review. Derived results are updated. A full distance rebuild takes several minutes:
+
+```bat
+python run_pipeline.py --rebuild-matrix
+python -m unittest discover -s tests -v
 ```
 
-Install dependencies:
+To reproduce preprocessing from the original raw observations, download the retained LFS source first:
 
-```bash
-pip install -r requirements.txt
+```bat
+git lfs install
+git lfs pull --include="data/lhr_fra_2025/DLH5H_A20N_2025_ALL_POSITION_POINTS.csv" --exclude=""
+python run_pipeline.py --from-raw
 ```
 
-## Run preprocessing
+`--from-raw` recreates prepared data and derived results, while leaving the raw source unchanged. Do not replace a matrix or sort its flight-ID file independently of the other outputs.
 
-From the project root, run:
+## Repository map
 
-```bash
-python src/preprocess.py --raw-dir . --file-pattern "DLH713_*.xlsx" --processed-dir data/processed
-```
+| Location | Purpose |
+|---|---|
+| `src/` | Four scripts for preparation, distances, clustering and candidate review |
+| `run_pipeline.py` | One command for the documented analysis |
+| `tests/` | Focused geometry, cleaning and cache-provenance checks |
+| `data/lhr_fra_2025/` | Original LHR–FRA source and flight metadata |
+| `data/lhr_fra_prepared/` | Cleaned points, acceptance list and quality audit |
+| `data/lhr_fra_hausdorff/` | Full-resolution distance matrix and matching flight order |
+| `data/lhr_fra_hdbscan_mcs10_ms5/` | Main result and complete parameter comparison |
+| `data/lhr_fra_hdbscan_mcs15_ms5/` | Original baseline for comparison |
+| `data/lhr_fra_candidate_review/` | Three persistent candidate cases |
+| `presentation/` | Editable slides and speaking notes |
+| `docs/` | Method, results, attribution and submission guidance |
+| `experiments/` | Retained teammate work on downsampling and visual QC |
 
-The `--file-pattern` argument makes the script reusable if the route, callsign, or raw-file names change later.
+The main analysis uses all accepted observations, with no interpolation or downsampling. The teammate's optional 10/30/60-second experiments have separate output folders and do not replace the main matrix. See [experiments/README.md](experiments/README.md).
 
-Example with raw files stored in `data/raw/`:
+## Interpretation
 
-```bash
-python src/preprocess.py --raw-dir data/raw --file-pattern "*.xlsx" --processed-dir data/processed
-```
+The metric compares horizontal point sets and ignores time ordering, altitude and speed. Noise labels identify geometric review candidates. Weather, runway, ATC causes, fuel savings and safety implications have not been established. The 39 flights held for quality review differ from the 14 HDBSCAN noise flights.
 
-## Generated outputs
+The old ICN–FRA Excel workflow was removed from the current tree during the LHR–FRA cleanup. Its files remain in Git history. See [the cleanup record](docs/REPOSITORY_CLEANUP.md). No repository history was rewritten.
 
-After preprocessing, the following files are created locally:
-
-```text
-data/processed/flight_points_clean.csv
-data/processed/flight_points_scaled.csv
-data/processed/flights_summary.csv
-data/processed/preprocessing_report.json
-```
-
-### `flight_points_clean.csv`
-
-Clean point-level trajectory dataset. One row represents one recorded point of one flight.
-
-### `flight_points_scaled.csv`
-
-Point-level trajectory dataset with additional standardized columns:
-
-```text
-latitude_scaled
-longitude_scaled
-altitude_scaled
-heading_scaled
-time_from_start_sec_scaled
-route_progress_scaled
-```
-
-### `flights_summary.csv`
-
-Flight-level summary table with point counts, duration, coordinate ranges, and altitude ranges.
-
-### `preprocessing_report.json`
-
-Reproducibility report showing the filename pattern, input files, number of reconstructed flights, removed invalid points, removed duplicates, and final clean point count.
-
-## Current preprocessing result
-
-Using the provided 2024-2026 DLH713 files, the pipeline produced:
-
-```text
-reconstructed_flights: 291
-parsed_points_before_cleaning: 86381
-invalid_points_removed: 18
-duplicated_points_removed: 1
-clean_points: 86362
-clean_flights: 291
-```
-
-## Suggested project pipeline
-
-```text
-Raw trajectory exports
-        |
-        v
-Data preprocessing
-        |
-        v
-Feature engineering / dimensionality reduction
-        |
-        v
-Trajectory clustering
-        |
-        v
-Cluster and anomaly analysis
-        |
-        v
-Visualization and interpretation
-```
-
-## Assumptions and limitations
-
-- The exact original data provider/source should be confirmed by the project team.
-- Airport labels are used only as project context because the raw files do not include explicit airport columns.
-- The preprocessing pipeline relies on the observed raw-file structure: flight-level CSV-like records with a nested `track` field.
-- Generated processed datasets can be reproduced locally by running the preprocessing script.
-
-## Data policy
-
-Code and documentation can be committed to GitHub. Large, restricted, credential-bearing, or access-controlled datasets should be handled carefully. Generated processed datasets can be reproduced locally from the raw files.
+Data source: OpenSky Network, supplied through the team repository. Library implementation: `sklearn.cluster.HDBSCAN`. ChatGPT/Codex assisted with code, checks, interpretation and presentation preparation. Team members must confirm their contributions before submission. This repository does not claim a from-scratch HDBSCAN implementation.

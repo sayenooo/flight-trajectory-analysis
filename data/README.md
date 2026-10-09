@@ -1,68 +1,27 @@
-# Data
+# Data and result inventory
 
-This directory is used for local raw and processed trajectory data.
+## Inputs preserved from the team repository
 
-## Current raw data
+`lhr_fra_2025/` contains the original 2025 LHR to FRA source. The full position CSV is stored with Git LFS. Its SHA256 is `3848f3829e19848eb025df79b1ca7642cb2298ed4bfb75526de70dd3d4fbe858`, introduced at commit `3ed740bcaaad81d22a5de6626eac7fa2d5a54b1f`. The flight list and original provider QC summary are retained alongside it. The provider QC summary is not a substitute for the project's coordinate checks.
 
-The current dataset consists of **DLH713 trajectory exports for 2024, 2025, and 2026**:
+`lhr_fra_prepared/` preserves the five files uploaded by the student at commit `c75a8f9`:
 
-```text
-DLH713_2024.csv.xlsx
-DLH713_2025.csv.xlsx
-DLH713_2026.csv.xlsx
-```
+| File | Meaning |
+|---|---|
+| `flight_points_clean.csv.gz` | 1,242,774 retained points from all 348 flights |
+| `accepted_flights.csv` | The 309 flight IDs selected for the main analysis |
+| `flight_qc.csv` | Quality metrics and pass/review decision for every flight |
+| `removed_points.csv` | 224 removed rows with reasons |
+| `preparation_report.json` | Source hash, counts and processing thresholds |
 
-The files contain CSV-like flight records inside Excel workbooks. The exact original provider/source of the data should be confirmed by the team. The current preprocessing script only assumes the observed file structure, not a specific data provider.
+The committed compressed-point SHA256 is `7e4925a67577ed4cb5f34aa72be4d786a150ee5850b5ca9f1f021309c5969acc`. All five prepared files remain byte-for-byte unchanged during cleanup. A fresh preprocessing run may produce a different compressed-file hash due to gzip metadata or numeric serialization.
 
-## Route context
+## Derived outputs
 
-The working route context for the current dataset is:
+- `lhr_fra_hausdorff/`: the 309 × 309 full-resolution symmetric Hausdorff matrix, flight-ID order, report and checksum. A CSV duplicate can be regenerated but is not committed.
+- `lhr_fra_hdbscan_mcs10_ms5/`: working configuration, cluster labels and medoids, parameter labels and all 15 settings, noise candidates and plots.
+- `lhr_fra_hdbscan_mcs15_ms5/`: original baseline and its outputs.
+- `lhr_fra_candidate_review/`: three persistent candidates, distances to nearest medoids, point-gap checks and plots.
+- `experiments/`: local outputs of optional teammate experiments. These are ignored by Git and have different paths from the main outputs.
 
-```text
-Seoul / Incheon area (ICN / RKSI) -> Frankfurt area (FRA / EDDF)
-```
-
-This label is inferred from the DLH713 callsign and trajectory coordinate ranges. The raw files do not include explicit departure-airport or arrival-airport columns.
-
-## Recommended local structure
-
-```text
-data/
-├── raw/          # optional: local raw trajectory files
-├── interim/      # optional: intermediate working files
-└── processed/    # generated preprocessing outputs
-```
-
-The current raw files are stored in the project root, but the script also works if raw files are moved into `data/raw/`.
-
-## Run preprocessing
-
-From the project root with the current files:
-
-```bash
-python src/preprocess.py --raw-dir . --file-pattern "DLH713_*.xlsx" --processed-dir data/processed
-```
-
-If the team moves the files into `data/raw/` or changes the dataset, use a different pattern:
-
-```bash
-python src/preprocess.py --raw-dir data/raw --file-pattern "*.xlsx" --processed-dir data/processed
-```
-
-Generated files:
-
-```text
-data/processed/flight_points_clean.csv
-data/processed/flight_points_scaled.csv
-data/processed/flights_summary.csv
-data/processed/preprocessing_report.json
-```
-
-The generated CSV files are designed for the next project stage: PCA, HDBSCAN clustering, anomaly detection, and visualization.
-
-## Notes for teammates
-
-- `flight_points_clean.csv` keeps original latitude, longitude, altitude, heading, and time values.
-- `flight_points_scaled.csv` adds standardized numeric columns for PCA/HDBSCAN.
-- `flights_summary.csv` provides one row per reconstructed flight for quick quality checks.
-- `preprocessing_report.json` records the input pattern and the number of parsed/removed/saved points.
+The published analysis was regenerated using the committed prepared CSV during the repository cleanup. Input and output checksums are recorded in `docs/REPRODUCIBILITY.json` and per-stage reports. The flight-ID order is part of the matrix and must be kept with it.

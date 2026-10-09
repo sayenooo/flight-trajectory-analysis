@@ -1,0 +1,33 @@
+{
+  "implementation": "sklearn.cluster.HDBSCAN",
+  "sklearn_version": "1.8.0",
+  "min_cluster_size": 15,
+  "min_samples": 5,
+  "min_samples_includes_self": true,
+  "metric": "precomputed",
+  "cluster_selection_method": "eom",
+  "allow_single_cluster": false,
+  "flights": 309,
+  "clusters": 3,
+  "cluster_sizes": {
+    "0": 180,
+    "1": 68,
+    "2": 33
+  },
+  "noise_flights": 28,
+  "noise_percent": 9.06148867313916,
+  "parameter_settings": 15,
+  "matrix_sha256": "e75a5de8f6b33039efbf79b5ab65a4c8c9e6d38ab424d41595ea7cf283cdbd77",
+  "flight_id_file_sha256": "46008eebe616687a9c1319554b8063a988686d0f4c4ea640aafb103a3af07f7d",
+  "representative_method": "Real flight minimizing the sum of within-cluster Hausdorff distances (unweighted medoid).",
+  "output_dir": "data/lhr_fra_hdbscan_mcs15_ms5",
+  "interpretation": [
+    "This is a baseline, not an automatically selected optimal model.",
+    "Label -1 means density-based noise, not a confirmed operational anomaly.",
+    "Membership strength and noise frequency are not probabilities of a dangerous or abnormal flight.",
+    "The grid includes the baseline; noise frequency is a descriptive sensitivity check, not independent validation.",
+    "Cluster numbers are arbitrary and need not match across parameter settings or library versions.",
+    "Quality-review flights are excluded before clustering and differ from HDBSCAN noise flights.",
+    "Review held-flight selection bias, residual coordinate errors and real route shapes before interpreting anomalies."
+  ]
+}
