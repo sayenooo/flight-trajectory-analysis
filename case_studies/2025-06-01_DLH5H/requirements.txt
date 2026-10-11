@@ -1,0 +1,6 @@
+# Python 3.11-3.13 suggested; use a virtual environment.
+numpy>=1.26
+pandas>=2.2
+matplotlib>=3.8
+h5py>=3.10
+pyopensky

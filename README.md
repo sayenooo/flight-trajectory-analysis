@@ -23,6 +23,8 @@ The working setting preserves a coherent 14-flight northern route group. It is a
 
 ## Start here
 
+- [Case study — 1 June 2025 DLH5H: weather, competing arrival trajectories and final ATC/procedure hypothesis](case_studies/2025-06-01_DLH5H/README.md)
+
 - [Presentation](presentation/LHR_FRA_HDBSCAN_Presentation.pptx) and [15-minute speaker notes](presentation/SPEAKER_NOTES.md)
 - [Method and limitations](docs/METHOD.md)
 - [Results and outlier analysis](docs/RESULTS.md)
